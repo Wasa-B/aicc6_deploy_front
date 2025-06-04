@@ -1,20 +1,55 @@
-FROM node:alpine3.18 AS build
+# Use the official Node.js image based on Alpine Linux for building the React app
+FROM node:alpine3.18 as build
 
-# 작업 디렉토리 설정
+
+# Set the working directory inside the container to /app
 WORKDIR /app
 
-# COPY <복사할 경로/파일명> <붙여넣을 디렉토리>
-# package.json 작업 디렉토리에 복사
-# . = ./ 과 동일 현재 작업 디렉토리 의미
+
+# Copy the package.json file to the working directory
 COPY package.json .
 
-# 의존성 설치 명령어 실행
-RUN npm install
-# 현재 디렉토리의 모든 파일을 도커 컨테이너의 작업 디렉토리에 복사
-COPY . .
-ENV WATCHPACK_POLLING=true
-# 3000번 포트 노출
-EXPOSE 5173
 
-# npm start 스크립트 실행
-CMD ["npm","run","dev"]
+# Install the dependencies specified in package.json
+RUN npm install
+
+
+# Copy the rest of the application files to the working directory
+COPY . .
+
+
+# Build the React application
+RUN npm run build
+
+
+# Use the official Nginx image based on Alpine Linux for serving the built React app
+FROM nginx:1.23-alpine
+
+
+# Set the working directory inside the container to the default Nginx HTML directory
+WORKDIR /usr/share/nginx/html
+
+
+# Remove all files in the working directory (default Nginx HTML directory)
+RUN rm -rf *
+
+
+# Copy the built React app from the build stage to the Nginx HTML directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+
+# Copy the Nginx configuration file
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+
+# Copy the built React app from the build stage to the Nginx HTML directory
+# COPY --from=build /app/build .
+
+
+# Expose port 80 to allow external access to the Nginx server
+EXPOSE 80
+
+
+# Start Nginx in the foreground (do not daemonize)
+ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
+
