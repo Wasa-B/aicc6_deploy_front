@@ -1,4 +1,4 @@
-name: cicd
+name: CICD
 #이벤트가 실행될 workflow 정의
 on:
   push:
@@ -23,13 +23,13 @@ jobs:
       - name: Push Docker Image
         run: docker push ghd1876/aicc6_task_front:latest
 
-deploy:
-  needs: build
-  runs-on: aws-ec2
-  steps:
-    - name: Pull image from docker hub
-      run: docker pull ghd1876/aicc6_task_front:latest
-    - name: Delete existing container
-      run: docker rm -f task-container
-    - name: Run Container
-      run: docker run -d -p 80:80 --name task-container ghd1876/aicc6_task_front
+  deploy:
+    needs: build
+    runs-on: aws-ec2
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull ghd1876/aicc6_task_front:latest
+      - name: Delete existing container
+        run: docker rm -f task-container
+      - name: Run Container
+        run: docker run -d -p 80:80 --name task-container ghd1876/aicc6_task_front
